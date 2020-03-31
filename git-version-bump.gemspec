@@ -3,7 +3,7 @@ $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
 require 'git-version-bump'
 
 Gem::Specification.new do |s|
-	s.name = "git-version-bump"
+	s.name = "git-lite-version-bump"
 
 	s.version = GVB.version
 	s.date    = GVB.date
@@ -11,8 +11,8 @@ Gem::Specification.new do |s|
 	s.platform              = Gem::Platform::RUBY
 	s.required_ruby_version = ">= 1.8.7"
 
-	s.homepage = "http://theshed.hezmatt.org/git-version-bump"
-	s.summary = "Manage your app version entirely via git tags"
+	s.homepage = "http://github.com/rbclark/git-version-bump"
+	s.summary = "Manage your app version entirely via git tags (even lite tags)"
 	s.authors = ["Matt Palmer"]
 
 	s.extra_rdoc_files = ["README.md"]
