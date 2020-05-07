@@ -36,11 +36,13 @@ module GitVersionBump
 		# git failed us; we're either not in a git repo or else we've never
 		# tagged anything before.
 
-		# Are we in a git repo with no tags?  If so, dump out our
-		# super-special version and be done with it, otherwise try to use the
-		# gem version.
-		system("git -C #{sq_git_dir} status > #{DEVNULL} 2>&1")
-		$? == 0 ? "0.0.0.1.ENOTAG" : gem_version(use_local_git)
+		# Are we in a git repo with no tags?  If so, try to use the gemspec
+		# and if that fails then abort
+		begin
+			return gem_version(use_local_git)
+		rescue VersionUnobtainable
+			return "0.0.0.1.ENOTAG"
+		end
 	end
 
 	def self.major_version(use_local_git=false, include_lite_tags=false)
@@ -100,11 +102,11 @@ module GitVersionBump
 		if $? == 0
 			# Yes, we're in git.
 
-			if dirty_tree?
+			if dirty_tree?(sq_git_dir)
 				return Time.now.strftime("%F")
 			else
 				# Clean tree.  Date of last commit is needed.
-				return `git -C #{sq_git_dir} show --no-show-signature --format=format:%cd --date=short`.lines.first.strip
+				return `git -C #{sq_git_dir} show --no-show-signature --format=format:%cd --date=short`.lines.first&.strip
 			end
 		else
 			if use_local_git
@@ -228,10 +230,13 @@ module GitVersionBump
 		# git failed us; either we're not in a git repo or else it's a git
 		# repo that's not got any commits.
 
-		# Are we in a git repo with no tags?  If so, dump out our
-		# super-special version and be done with it.
-		system("git -C #{sq_git_dir} status > #{DEVNULL} 2>&1")
-		$? == 0 ? "0.0.0.1.ENOCOMMITS" : gem_version(use_local_git)
+		# Are we in a git repo with no commits?  If so, try to use the gemspec
+		# and if that fails then abort
+		begin
+			return gem_version(use_local_git)
+		rescue VersionUnobtainable
+			return "0.0.0.1.ENOCOMMITS"
+		end
 	end
 
 	private
@@ -242,11 +247,9 @@ module GitVersionBump
 		$? == 0
 	end
 
-	def self.dirty_tree?
+	def self.dirty_tree?(sq_git_dir='.')
 		# Are we in a dirty, dirty tree?
-		system("! git diff --no-ext-diff --quiet --exit-code 2> #{DEVNULL} || ! git diff-index --cached --quiet HEAD 2> #{DEVNULL}")
-
-		$? == 0
+		!system("git -C #{sq_git_dir} diff --no-ext-diff --quiet --exit-code 2> #{DEVNULL}") || !("git -C #{sq_git_dir} diff-index --cached --quiet HEAD 2> #{DEVNULL}")
 	end
 
 	def self.caller_file
